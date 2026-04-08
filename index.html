@@ -49,7 +49,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-ser
 </div>
 <script>
 let sessions = [];
-let elapsedHistory = []; // 直近2回分のケア時間を記録
+let elapsedHistory = [];
 
 function pad(n) { return String(n).padStart(2, '0'); }
 
@@ -162,7 +162,7 @@ function onElapsedInput(i, el) {
   updateNextStart(i);
 }
 
-function onElapsedBlur(i) {
+function onIntervalFocus(i) {
   if (i === sessions.length - 1 && calcEndMin(sessions[i]) !== null) {
     sessions.push(newSession(calcNextStart(i)));
     render();
@@ -202,13 +202,13 @@ function render() {
           <label>ケア時間（分）</label>
           <input id="f-${i}-elapsed" type="text" inputmode="numeric"
             value="${s.elapsed}"
-            oninput="onElapsedInput(${i},this)"
-            onblur="onElapsedBlur(${i})">
+            oninput="onElapsedInput(${i},this)">
         </div>
         <div class="field">
           <label>インターバル(分)</label>
           <input id="f-${i}-interval" type="text" inputmode="numeric" placeholder="5"
             value="${s.interval}"
+            onfocus="onIntervalFocus(${i})"
             oninput="onIntervalInput(${i},this)">
         </div>
       </div>
