@@ -10,7 +10,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-ser
 .app { max-width: 480px; margin: 0 auto; padding: 1rem; }
 .header { text-align: center; margin-bottom: 1.25rem; padding-top: 0.5rem; }
 .header h1 { font-size: 20px; font-weight: 600; color: #c2628a; margin-bottom: 4px; }
-.header p { font-size: 13px; color: #999; }
+.header p { font-size: 13px; color: #999; margin-bottom: 2px; }
 .session { background: #fff; border: 1px solid #f4c0d1; border-radius: 12px; padding: 0.9rem 1rem; margin-bottom: 0.75rem; }
 .session-header { display: flex; align-items: center; margin-bottom: 0.75rem; }
 .session-title { font-size: 14px; font-weight: 600; color: #99355a; background: #fce8f0; border-radius: 8px; padding: 3px 10px; }
@@ -40,7 +40,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-ser
 <div class="app">
   <div class="header">
     <h1>スケジュール時間管理</h1>
-    <p>開始時刻と経過時間（分）を入力してください</p>
+    <p>開始時刻とケア時間（分）を入力してください</p>
+    <p>ケア時間（分）はランダムで表示されます</p>
   </div>
   <div id="sessions"></div>
   <button class="add-btn" onclick="manualAdd()">＋ セッションを手動追加</button>
@@ -48,8 +49,23 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-ser
 </div>
 <script>
 let sessions = [];
+let elapsedHistory = []; // 直近2回分のケア時間を記録
 
 function pad(n) { return String(n).padStart(2, '0'); }
+
+function randomElapsed() {
+  let val;
+  do {
+    val = String(Math.floor(Math.random() * 6) + 20);
+  } while (
+    elapsedHistory.length >= 2 &&
+    elapsedHistory[elapsedHistory.length - 1] === val &&
+    elapsedHistory[elapsedHistory.length - 2] === val
+  );
+  elapsedHistory.push(val);
+  if (elapsedHistory.length > 2) elapsedHistory.shift();
+  return val;
+}
 
 function parseTime(str) {
   if (!str) return null;
@@ -79,10 +95,11 @@ function calcNextStart(i) {
 }
 
 function newSession(preStart) {
-  return { start: preStart || '', elapsed: '', interval: '5' };
+  return { start: preStart || '', elapsed: randomElapsed(), interval: '5' };
 }
 
 function init() {
+  elapsedHistory = [];
   sessions = [newSession(), newSession()];
   render();
 }
@@ -182,8 +199,8 @@ function render() {
             oninput="onTimeInput(${i},this)">
         </div>
         <div class="field">
-          <label>経過時間（分）</label>
-          <input id="f-${i}-elapsed" type="text" inputmode="numeric" placeholder="00"
+          <label>ケア時間（分）</label>
+          <input id="f-${i}-elapsed" type="text" inputmode="numeric"
             value="${s.elapsed}"
             oninput="onElapsedInput(${i},this)"
             onblur="onElapsedBlur(${i})">
@@ -200,7 +217,7 @@ function render() {
         <span class="end-time" id="end-${i}">${endMin !== null ? minToStr(endMin) : '—'}</span>
       </div>
       <div class="session-footer">
-        ${isAutoStart && isLast ? `<span class="hint-text">経過時間（分）を入力後インターバル（分）をタップすると次のセッションが追加されます</span>` : '<span></span>'}
+        ${isAutoStart && isLast ? `<span class="hint-text">ケア時間（分）を入力後インターバル（分）をタップすると次のセッションが追加されます</span>` : '<span></span>'}
         <button class="btn-delete" onclick="removeSession(${i})">削除</button>
       </div>
     `;
@@ -208,7 +225,11 @@ function render() {
   });
 }
 
-function clearAll() { sessions = [newSession(), newSession()]; render(); }
+function clearAll() {
+  elapsedHistory = [];
+  sessions = [newSession(), newSession()];
+  render();
+}
 
 init();
 </script>
