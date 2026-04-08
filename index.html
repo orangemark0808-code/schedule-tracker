@@ -17,14 +17,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-ser
 .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px; }
 .field { display: flex; flex-direction: column; gap: 4px; }
 .field label { font-size: 12px; color: #444; font-weight: 500; }
-.field input[type="text"] { width: 100%; border: 1px solid #f4c0d1; border-radius: 8px; padding: 10px 8px; font-size: 20px; font-weight: 600; color: #111; background: #fff; -webkit-appearance: none; appearance: none; text-align: center; }
+.field input[type="text"] {
+  width: 100%; border: 1px solid #f4c0d1; border-radius: 8px;
+  padding: 10px 8px; font-size: 20px; font-weight: 600; color: #111;
+  background: #fff; -webkit-appearance: none; appearance: none; text-align: center;
+}
 .field input[type="text"]::placeholder { color: #bbb; font-weight: 400; font-size: 15px; }
 .field input[type="text"].auto-filled { background: #fdf4f8; color: #c2628a; }
 .field input[type="text"]:focus { outline: none; border-color: #d4537e; box-shadow: 0 0 0 3px #fce8f0; }
 .field input[type="text"].error { border-color: #e24b4a; }
-.field input[type="number"] { width: 100%; border: 1px solid #f4c0d1; border-radius: 8px; padding: 10px 8px; font-size: 20px; font-weight: 600; color: #111; background: #fff; -webkit-appearance: none; appearance: none; text-align: center; }
-.field input[type="number"]::placeholder { color: #bbb; font-weight: 400; font-size: 15px; }
-.field input[type="number"]:focus { outline: none; border-color: #d4537e; box-shadow: 0 0 0 3px #fce8f0; }
 .end-row { background: #fdf4f8; border: 1px solid #f4c0d1; border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .end-label { font-size: 13px; color: #99355a; font-weight: 500; }
 .end-time { font-size: 24px; font-weight: 700; color: #72243e; }
@@ -51,8 +52,7 @@ function pad(n) { return String(n).padStart(2, '0'); }
 
 function parseTime(str) {
   if (!str) return null;
-  const s = str.replace(/[^\d:]/g, '');
-  const m = s.match(/^(\d{1,2}):(\d{2})$/);
+  const m = str.match(/^(\d{1,2}):(\d{2})$/);
   if (!m) return null;
   const h = parseInt(m[1]), min = parseInt(m[2]);
   if (h > 23 || min > 59) return null;
@@ -61,15 +61,14 @@ function parseTime(str) {
 
 function minToStr(totalMin) {
   if (totalMin === null) return '';
-  const h = Math.floor(totalMin / 60) % 24;
-  return pad(h) + ':' + pad(totalMin % 60);
+  return pad(Math.floor(totalMin / 60) % 24) + ':' + pad(totalMin % 60);
 }
 
 function calcEndMin(s) {
   const sm = parseTime(s.start);
-  const elapsed = parseInt(s.elapsed);
-  if (sm === null || isNaN(elapsed) || elapsed <= 0) return null;
-  return sm + elapsed;
+  const el = parseInt(s.elapsed);
+  if (sm === null || isNaN(el) || el <= 0) return null;
+  return sm + el;
 }
 
 function calcNextStart(i) {
@@ -98,21 +97,21 @@ function removeSession(i) {
   render();
 }
 
-function updateField(i, field, val) {
-  sessions[i][field] = val;
-  propagateStartTimes(i);
-  if (field === 'elapsed' && i === sessions.length - 1) {
-    if (calcEndMin(sessions[i]) !== null) {
-      sessions.push(newSession(calcNextStart(i)));
-    }
-  }
-  render();
+function updateEndBadge(i) {
+  const endMin = calcEndMin(sessions[i]);
+  const badge = document.getElementById('end-' + i);
+  if (badge) badge.textContent = endMin !== null ? minToStr(endMin) : '—';
 }
 
-function propagateStartTimes(fromIndex) {
-  for (let j = fromIndex; j < sessions.length - 1; j++) {
+function updateNextStart(i) {
+  for (let j = i; j < sessions.length - 1; j++) {
     const ns = calcNextStart(j);
-    if (ns) sessions[j + 1].start = ns;
+    if (ns) {
+      sessions[j + 1].start = ns;
+      const el = document.getElementById('f-' + (j + 1) + '-start');
+      if (el) el.value = ns;
+    }
+    updateEndBadge(j + 1);
   }
 }
 
@@ -123,7 +122,9 @@ function onTimeInput(i, el) {
   const parsed = parseTime(raw);
   if (parsed !== null || raw === '') {
     el.classList.remove('error');
-    updateField(i, 'start', raw);
+    sessions[i].start = raw;
+    updateEndBadge(i);
+    updateNextStart(i);
     if (parsed !== null && raw.length === 5) {
       setTimeout(() => {
         const next = document.getElementById('f-' + i + '-elapsed');
@@ -135,16 +136,31 @@ function onTimeInput(i, el) {
   }
 }
 
+function onElapsedInput(i, el) {
+  const raw = el.value.replace(/[^\d]/g, '');
+  el.value = raw;
+  sessions[i].elapsed = raw;
+  updateEndBadge(i);
+  updateNextStart(i);
+  if (i === sessions.length - 1 && calcEndMin(sessions[i]) !== null) {
+    sessions.push(newSession(calcNextStart(i)));
+    render();
+  }
+}
+
+function onIntervalInput(i, el) {
+  const raw = el.value.replace(/[^\d]/g, '');
+  el.value = raw;
+  sessions[i].interval = raw;
+  updateNextStart(i);
+}
+
 function render() {
   const container = document.getElementById('sessions');
-  const focusedId = document.activeElement ? document.activeElement.id : null;
-  const scrollY = window.scrollY;
   container.innerHTML = '';
-
   sessions.forEach((s, i) => {
     const endMin = calcEndMin(s);
     const isAutoStart = i > 0;
-
     const div = document.createElement('div');
     div.className = 'session';
     div.innerHTML = `
@@ -161,20 +177,20 @@ function render() {
         </div>
         <div class="field">
           <label>経過時間（分）</label>
-          <input id="f-${i}-elapsed" type="number" inputmode="numeric" min="1"
-            placeholder="00" value="${s.elapsed}"
-            oninput="updateField(${i},'elapsed',this.value)">
+          <input id="f-${i}-elapsed" type="text" inputmode="numeric" placeholder="00"
+            value="${s.elapsed}"
+            oninput="onElapsedInput(${i},this)">
         </div>
         <div class="field">
           <label>インターバル(分)</label>
-          <input id="f-${i}-interval" type="number" inputmode="numeric" min="0"
-            placeholder="5" value="${s.interval}"
-            oninput="updateField(${i},'interval',this.value)">
+          <input id="f-${i}-interval" type="text" inputmode="numeric" placeholder="5"
+            value="${s.interval}"
+            oninput="onIntervalInput(${i},this)">
         </div>
       </div>
       <div class="end-row">
         <span class="end-label">終了時刻</span>
-        <span class="end-time">${endMin !== null ? minToStr(endMin) : '—'}</span>
+        <span class="end-time" id="end-${i}">${endMin !== null ? minToStr(endMin) : '—'}</span>
       </div>
       <div class="session-footer">
         <button class="btn-delete" onclick="removeSession(${i})">削除</button>
@@ -182,9 +198,6 @@ function render() {
     `;
     container.appendChild(div);
   });
-
-  if (focusedId) { const el = document.getElementById(focusedId); if (el) el.focus(); }
-  window.scrollTo(0, scrollY);
 }
 
 function clearAll() { sessions = [newSession(), newSession()]; render(); }
