@@ -29,8 +29,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-ser
 .end-row { background: #fdf4f8; border: 1px solid #f4c0d1; border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .end-label { font-size: 13px; color: #99355a; font-weight: 500; }
 .end-time { font-size: 24px; font-weight: 700; color: #72243e; }
-.session-footer { display: flex; justify-content: flex-end; }
-.btn-delete { font-size: 12px; color: #bbb; border: none; background: transparent; cursor: pointer; padding: 4px 8px; }
+.session-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.hint-text { font-size: 11px; color: #bbb; flex: 1; }
+.btn-delete { font-size: 12px; color: #bbb; border: none; background: transparent; cursor: pointer; padding: 4px 8px; white-space: nowrap; }
 .add-btn { width: 100%; margin-top: 0.25rem; padding: 14px; border: 1.5px dashed #f4c0d1; border-radius: 12px; background: transparent; color: #d4537e; font-size: 16px; cursor: pointer; }
 .clear-btn { width: 100%; margin-top: 0.5rem; margin-bottom: 2rem; padding: 10px; border: 1px solid #ddd; border-radius: 8px; background: transparent; color: #aaa; font-size: 14px; cursor: pointer; }
 </style>
@@ -142,6 +143,9 @@ function onElapsedInput(i, el) {
   sessions[i].elapsed = raw;
   updateEndBadge(i);
   updateNextStart(i);
+}
+
+function onElapsedBlur(i) {
   if (i === sessions.length - 1 && calcEndMin(sessions[i]) !== null) {
     sessions.push(newSession(calcNextStart(i)));
     render();
@@ -161,6 +165,8 @@ function render() {
   sessions.forEach((s, i) => {
     const endMin = calcEndMin(s);
     const isAutoStart = i > 0;
+    const isLast = i === sessions.length - 1;
+
     const div = document.createElement('div');
     div.className = 'session';
     div.innerHTML = `
@@ -179,7 +185,8 @@ function render() {
           <label>経過時間（分）</label>
           <input id="f-${i}-elapsed" type="text" inputmode="numeric" placeholder="00"
             value="${s.elapsed}"
-            oninput="onElapsedInput(${i},this)">
+            oninput="onElapsedInput(${i},this)"
+            onblur="onElapsedBlur(${i})">
         </div>
         <div class="field">
           <label>インターバル(分)</label>
@@ -193,6 +200,7 @@ function render() {
         <span class="end-time" id="end-${i}">${endMin !== null ? minToStr(endMin) : '—'}</span>
       </div>
       <div class="session-footer">
+        ${isAutoStart && isLast ? `<span class="hint-text">経過時間（分）を入力後インターバル（分）をタップすると次のセッションが追加されます</span>` : '<span></span>'}
         <button class="btn-delete" onclick="removeSession(${i})">削除</button>
       </div>
     `;
