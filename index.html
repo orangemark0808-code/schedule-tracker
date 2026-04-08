@@ -139,10 +139,24 @@ function onTimeInput(i, field, el) {
   let raw = el.value.replace(/[^\d]/g, '');
   if (raw.length >= 3) raw = raw.slice(0, 2) + ':' + raw.slice(2, 4);
   el.value = raw;
+
   const parsed = parseTime(raw);
   if (parsed !== null || raw === '') {
     el.classList.remove('error');
     updateField(i, field, raw);
+
+    // 4桁入力完了（HH:MM形式になった）時に次のフィールドへ自動移動
+    if (parsed !== null && raw.length === 5) {
+      let nextEl = null;
+      if (field === 'start') {
+        nextEl = document.getElementById('f-' + i + '-end');
+      } else if (field === 'end') {
+        nextEl = document.getElementById('f-' + i + '-interval');
+      }
+      if (nextEl) {
+        setTimeout(() => nextEl.focus(), 50);
+      }
+    }
   } else {
     el.classList.add('error');
   }
