@@ -11,30 +11,25 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-ser
 .header { text-align: center; margin-bottom: 1.25rem; padding-top: 0.5rem; }
 .header h1 { font-size: 20px; font-weight: 600; color: #c2628a; margin-bottom: 4px; }
 .header p { font-size: 13px; color: #999; }
-.toggle-bar { display: flex; justify-content: flex-end; margin-bottom: 0.75rem; }
-.toggle-btn { font-size: 12px; background: #fce8f0; color: #99355a; border: 1px solid #f4c0d1; border-radius: 8px; padding: 5px 12px; cursor: pointer; }
-.total-card { background: #fce8f0; border: 1px solid #f4c0d1; border-radius: 12px; padding: 0.75rem 1rem; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between; }
-.total-label { font-size: 13px; color: #99355a; }
-.total-value { font-size: 24px; font-weight: 600; color: #72243e; }
-.total-unit { font-size: 13px; color: #99355a; margin-left: 4px; }
 .session { background: #fff; border: 1px solid #f4c0d1; border-radius: 12px; padding: 0.9rem 1rem; margin-bottom: 0.75rem; }
-.session-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.6rem; }
+.session-header { display: flex; align-items: center; margin-bottom: 0.75rem; }
 .session-title { font-size: 14px; font-weight: 600; color: #99355a; background: #fce8f0; border-radius: 8px; padding: 3px 10px; }
-.duration-badge { font-size: 18px; color: #111; font-weight: 700; }
-.row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 6px; }
+.row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px; }
 .field { display: flex; flex-direction: column; gap: 4px; }
-.field label { font-size: 13px; color: #444; font-weight: 500; }
-.field input[type="text"] { width: 100%; border: 1px solid #f4c0d1; border-radius: 8px; padding: 10px 10px; font-size: 22px; font-weight: 600; color: #111; background: #fff; -webkit-appearance: none; appearance: none; }
-.field input[type="text"]::placeholder { color: #999; font-weight: 400; font-size: 18px; }
+.field label { font-size: 12px; color: #444; font-weight: 500; }
+.field input[type="text"] { width: 100%; border: 1px solid #f4c0d1; border-radius: 8px; padding: 10px 8px; font-size: 20px; font-weight: 600; color: #111; background: #fff; -webkit-appearance: none; appearance: none; text-align: center; }
+.field input[type="text"]::placeholder { color: #bbb; font-weight: 400; font-size: 15px; }
 .field input[type="text"].auto-filled { background: #fdf4f8; color: #c2628a; }
 .field input[type="text"]:focus { outline: none; border-color: #d4537e; box-shadow: 0 0 0 3px #fce8f0; }
 .field input[type="text"].error { border-color: #e24b4a; }
-.interval-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
-.interval-row label { font-size: 13px; color: #444; font-weight: 500; white-space: nowrap; }
-.interval-row input[type="number"] { width: 75px; border: 1px solid #f4c0d1; border-radius: 8px; padding: 8px 8px; font-size: 20px; font-weight: 600; color: #111; background: #fff; -webkit-appearance: none; appearance: none; }
-.interval-row input[type="number"]:focus { outline: none; border-color: #d4537e; box-shadow: 0 0 0 3px #fce8f0; }
-.session-footer { display: flex; justify-content: flex-end; margin-top: 10px; }
-.btn-delete { font-size: 13px; color: #bbb; border: none; background: transparent; cursor: pointer; padding: 4px 8px; }
+.field input[type="number"] { width: 100%; border: 1px solid #f4c0d1; border-radius: 8px; padding: 10px 8px; font-size: 20px; font-weight: 600; color: #111; background: #fff; -webkit-appearance: none; appearance: none; text-align: center; }
+.field input[type="number"]::placeholder { color: #bbb; font-weight: 400; font-size: 15px; }
+.field input[type="number"]:focus { outline: none; border-color: #d4537e; box-shadow: 0 0 0 3px #fce8f0; }
+.end-row { background: #fdf4f8; border: 1px solid #f4c0d1; border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.end-label { font-size: 13px; color: #99355a; font-weight: 500; }
+.end-time { font-size: 24px; font-weight: 700; color: #72243e; }
+.session-footer { display: flex; justify-content: flex-end; }
+.btn-delete { font-size: 12px; color: #bbb; border: none; background: transparent; cursor: pointer; padding: 4px 8px; }
 .add-btn { width: 100%; margin-top: 0.25rem; padding: 14px; border: 1.5px dashed #f4c0d1; border-radius: 12px; background: transparent; color: #d4537e; font-size: 16px; cursor: pointer; }
 .clear-btn { width: 100%; margin-top: 0.5rem; margin-bottom: 2rem; padding: 10px; border: 1px solid #ddd; border-radius: 8px; background: transparent; color: #aaa; font-size: 14px; cursor: pointer; }
 </style>
@@ -43,18 +38,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-ser
 <div class="app">
   <div class="header">
     <h1>スケジュール時間管理</h1>
-    <p>時刻は HHMM 形式で入力してください</p>
-  </div>
-  <div class="toggle-bar">
-    <button class="toggle-btn" onclick="toggleTotal()">合計時間を非表示</button>
-  </div>
-  <div class="total-card" id="totalCard">
-    <span class="total-label">合計時間</span>
-    <div>
-      <span class="total-value" id="totalMin">0</span>
-      <span class="total-unit">分</span>
-      <span style="font-size:13px;color:#99355a;margin-left:6px;" id="totalHour"></span>
-    </div>
+    <p>開始時刻と経過時間（分）を入力してください</p>
   </div>
   <div id="sessions"></div>
   <button class="add-btn" onclick="manualAdd()">＋ セッションを手動追加</button>
@@ -62,7 +46,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-ser
 </div>
 <script>
 let sessions = [];
-let showTotal = true;
 
 function pad(n) { return String(n).padStart(2, '0'); }
 
@@ -82,22 +65,21 @@ function minToStr(totalMin) {
   return pad(h) + ':' + pad(totalMin % 60);
 }
 
-function minutesToHM(min) {
-  if (min <= 0) return '';
-  const h = Math.floor(min / 60), m = min % 60;
-  if (h === 0) return '';
-  return '(' + h + '時間' + (m > 0 ? m + '分' : '') + ')';
+function calcEndMin(s) {
+  const sm = parseTime(s.start);
+  const elapsed = parseInt(s.elapsed);
+  if (sm === null || isNaN(elapsed) || elapsed <= 0) return null;
+  return sm + elapsed;
 }
 
 function calcNextStart(i) {
-  const s = sessions[i];
-  const em = parseTime(s.end);
-  const iv = parseInt(s.interval) || 0;
-  return (em !== null) ? minToStr(em + iv) : '';
+  const end = calcEndMin(sessions[i]);
+  const iv = parseInt(sessions[i].interval) || 0;
+  return end !== null ? minToStr(end + iv) : '';
 }
 
 function newSession(preStart) {
-  return { start: preStart || '', end: '', interval: '5' };
+  return { start: preStart || '', elapsed: '', interval: '5' };
 }
 
 function init() {
@@ -106,8 +88,7 @@ function init() {
 }
 
 function manualAdd() {
-  const last = sessions.length > 0 ? sessions[sessions.length - 1] : null;
-  const nextStart = last ? calcNextStart(sessions.length - 1) : '';
+  const nextStart = sessions.length > 0 ? calcNextStart(sessions.length - 1) : '';
   sessions.push(newSession(nextStart));
   render();
 }
@@ -119,9 +100,9 @@ function removeSession(i) {
 
 function updateField(i, field, val) {
   sessions[i][field] = val;
-  if (field === 'end' || field === 'interval') propagateStartTimes(i);
-  if (field === 'end' && val && parseTime(val) !== null) {
-    if (i === sessions.length - 1) {
+  propagateStartTimes(i);
+  if (field === 'elapsed' && i === sessions.length - 1) {
+    if (calcEndMin(sessions[i]) !== null) {
       sessions.push(newSession(calcNextStart(i)));
     }
   }
@@ -135,27 +116,19 @@ function propagateStartTimes(fromIndex) {
   }
 }
 
-function onTimeInput(i, field, el) {
+function onTimeInput(i, el) {
   let raw = el.value.replace(/[^\d]/g, '');
   if (raw.length >= 3) raw = raw.slice(0, 2) + ':' + raw.slice(2, 4);
   el.value = raw;
-
   const parsed = parseTime(raw);
   if (parsed !== null || raw === '') {
     el.classList.remove('error');
-    updateField(i, field, raw);
-
-    // 4桁入力完了（HH:MM形式になった）時に次のフィールドへ自動移動
+    updateField(i, 'start', raw);
     if (parsed !== null && raw.length === 5) {
-      let nextEl = null;
-      if (field === 'start') {
-        nextEl = document.getElementById('f-' + i + '-end');
-      } else if (field === 'end') {
-        nextEl = document.getElementById('f-' + i + '-interval');
-      }
-      if (nextEl) {
-        setTimeout(() => nextEl.focus(), 50);
-      }
+      setTimeout(() => {
+        const next = document.getElementById('f-' + i + '-elapsed');
+        if (next) next.focus();
+      }, 50);
     }
   } else {
     el.classList.add('error');
@@ -167,13 +140,9 @@ function render() {
   const focusedId = document.activeElement ? document.activeElement.id : null;
   const scrollY = window.scrollY;
   container.innerHTML = '';
-  let grand = 0;
 
   sessions.forEach((s, i) => {
-    const sm = parseTime(s.start);
-    const em = parseTime(s.end);
-    const dur = (sm !== null && em !== null && em > sm) ? em - sm : null;
-    if (dur !== null) grand += dur;
+    const endMin = calcEndMin(s);
     const isAutoStart = i > 0;
 
     const div = document.createElement('div');
@@ -181,26 +150,31 @@ function render() {
     div.innerHTML = `
       <div class="session-header">
         <span class="session-title">セッション ${i + 1}</span>
-        <span class="duration-badge">${dur !== null ? dur + '分' : ''}</span>
       </div>
-      <div class="row">
+      <div class="row3">
         <div class="field">
           <label>開始時刻${isAutoStart ? '（自動）' : ''}</label>
           <input id="f-${i}-start" type="text" inputmode="numeric" placeholder="0855"
             value="${s.start}" class="${isAutoStart ? 'auto-filled' : ''}"
             ${isAutoStart ? 'readonly' : ''}
-            oninput="onTimeInput(${i},'start',this)">
+            oninput="onTimeInput(${i},this)">
         </div>
         <div class="field">
-          <label>終了時刻</label>
-          <input id="f-${i}-end" type="text" inputmode="numeric" placeholder="1025"
-            value="${s.end}" oninput="onTimeInput(${i},'end',this)">
+          <label>経過時間（分）</label>
+          <input id="f-${i}-elapsed" type="number" inputmode="numeric" min="1"
+            placeholder="00" value="${s.elapsed}"
+            oninput="updateField(${i},'elapsed',this.value)">
+        </div>
+        <div class="field">
+          <label>インターバル(分)</label>
+          <input id="f-${i}-interval" type="number" inputmode="numeric" min="0"
+            placeholder="5" value="${s.interval}"
+            oninput="updateField(${i},'interval',this.value)">
         </div>
       </div>
-      <div class="interval-row">
-        <label>インターバル(分)</label>
-        <input id="f-${i}-interval" type="number" inputmode="numeric" min="0"
-          value="${s.interval}" oninput="updateField(${i},'interval',this.value)">
+      <div class="end-row">
+        <span class="end-label">終了時刻</span>
+        <span class="end-time">${endMin !== null ? minToStr(endMin) : '—'}</span>
       </div>
       <div class="session-footer">
         <button class="btn-delete" onclick="removeSession(${i})">削除</button>
@@ -209,16 +183,8 @@ function render() {
     container.appendChild(div);
   });
 
-  document.getElementById('totalMin').textContent = grand;
-  document.getElementById('totalHour').textContent = minutesToHM(grand);
   if (focusedId) { const el = document.getElementById(focusedId); if (el) el.focus(); }
   window.scrollTo(0, scrollY);
-}
-
-function toggleTotal() {
-  showTotal = !showTotal;
-  document.getElementById('totalCard').style.display = showTotal ? 'flex' : 'none';
-  document.querySelector('.toggle-btn').textContent = showTotal ? '合計時間を非表示' : '合計時間を表示';
 }
 
 function clearAll() { sessions = [newSession(), newSession()]; render(); }
