@@ -25,6 +25,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-ser
 .field { display: flex; flex-direction: column; gap: 4px; }
 .field label { font-size: 13px; color: #444; font-weight: 500; }
 .field input[type="text"] { width: 100%; border: 1px solid #f4c0d1; border-radius: 8px; padding: 10px 10px; font-size: 22px; font-weight: 600; color: #111; background: #fff; -webkit-appearance: none; appearance: none; }
+.field input[type="text"]::placeholder { color: #999; font-weight: 400; font-size: 18px; }
 .field input[type="text"].auto-filled { background: #fdf4f8; color: #c2628a; }
 .field input[type="text"]:focus { outline: none; border-color: #d4537e; box-shadow: 0 0 0 3px #fce8f0; }
 .field input[type="text"].error { border-color: #e24b4a; }
@@ -42,7 +43,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-ser
 <div class="app">
   <div class="header">
     <h1>スケジュール時間管理</h1>
-    <p>時刻は HH:MM 形式で入力してください</p>
+    <p>時刻は HHMM 形式で入力してください</p>
   </div>
   <div class="toggle-bar">
     <button class="toggle-btn" onclick="toggleTotal()">合計時間を非表示</button>
@@ -166,19 +167,19 @@ function render() {
     div.innerHTML = `
       <div class="session-header">
         <span class="session-title">セッション ${i + 1}</span>
-        <span class="duration-badge">${dur !== null ? dur + '分' : '—'}</span>
+        <span class="duration-badge">${dur !== null ? dur + '分' : ''}</span>
       </div>
       <div class="row">
         <div class="field">
           <label>開始時刻${isAutoStart ? '（自動）' : ''}</label>
-          <input id="f-${i}-start" type="text" inputmode="numeric" placeholder="8:55"
+          <input id="f-${i}-start" type="text" inputmode="numeric" placeholder="0855"
             value="${s.start}" class="${isAutoStart ? 'auto-filled' : ''}"
             ${isAutoStart ? 'readonly' : ''}
             oninput="onTimeInput(${i},'start',this)">
         </div>
         <div class="field">
           <label>終了時刻</label>
-          <input id="f-${i}-end" type="text" inputmode="numeric" placeholder="9:22"
+          <input id="f-${i}-end" type="text" inputmode="numeric" placeholder="1025"
             value="${s.end}" oninput="onTimeInput(${i},'end',this)">
         </div>
       </div>
