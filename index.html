@@ -6,6 +6,7 @@
 <title>スケジュール時間管理</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
+input { border: none !important; outline: none !important; box-shadow: none !important; -webkit-appearance: none !important; appearance: none !important; background: transparent; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; background: #fff5f9; min-height: 100vh; }
 .app { max-width: 480px; margin: 0 auto; padding: 1rem; }
 .header { text-align: center; margin-bottom: 1.25rem; padding-top: 0.5rem; }
@@ -14,22 +15,23 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-ser
 .session { background: #fff; border: 1px solid #f4c0d1; border-radius: 12px; padding: 0.9rem 1rem; margin-bottom: 0.75rem; }
 .session-header { display: flex; align-items: center; margin-bottom: 0.75rem; }
 .session-title { font-size: 14px; font-weight: 600; color: #99355a; background: #fce8f0; border-radius: 8px; padding: 3px 10px; }
-.row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
 .field { display: flex; flex-direction: column; gap: 4px; }
 .field label { font-size: 12px; color: #444; font-weight: 500; }
-.field input[type="text"] {
+.cell {
   width: 100%; border: 1px solid #f4c0d1; border-radius: 8px;
-  padding: 10px 8px; font-size: 20px; font-weight: 600; color: #111;
-  background: #fff; -webkit-appearance: none; appearance: none; text-align: center;
+  background: #fff;
+  height: 56px; display: flex; align-items: center; justify-content: center;
 }
-.field input[type="text"]::placeholder { color: #bbb; font-weight: 400; font-size: 15px; }
-.field input[type="text"].auto-filled { background: #fdf4f8; color: #c2628a; }
-.field input[type="text"]:focus { outline: none; border-color: #d4537e; box-shadow: 0 0 0 3px #fce8f0; }
-.field input[type="text"].error { border-color: #e24b4a; }
-.end-row { background: #fdf4f8; border: 1px solid #f4c0d1; border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-.end-label { font-size: 13px; color: #99355a; font-weight: 500; }
-.end-time { font-size: 24px; font-weight: 700; color: #72243e; }
-.session-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.cell input {
+  width: 100%; height: 100%;
+  font-size: 24px !important; font-weight: 600; color: #111;
+  text-align: center; padding: 0; margin: 0;
+}
+.cell input::placeholder { color: #bbb; font-weight: 400; font-size: 15px !important; }
+.cell.end-cell { background: #fdf4f8; font-size: 24px; font-weight: 600; color: #72243e; }
+.cell:focus-within { border-color: #d4537e; box-shadow: 0 0 0 3px #fce8f0 !important; }
+.session-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 4px; }
 .hint-text { font-size: 11px; color: #bbb; flex: 1; }
 .btn-delete { font-size: 12px; color: #bbb; border: none; background: transparent; cursor: pointer; padding: 4px 8px; white-space: nowrap; }
 .add-btn { width: 100%; margin-top: 0.25rem; padding: 14px; border: 1.5px dashed #f4c0d1; border-radius: 12px; background: transparent; color: #d4537e; font-size: 16px; cursor: pointer; }
@@ -139,7 +141,6 @@ function onTimeInput(i, el) {
   el.value = raw;
   const parsed = parseTime(raw);
   if (parsed !== null || raw === '') {
-    el.classList.remove('error');
     sessions[i].start = raw;
     updateEndBadge(i);
     updateNextStart(i);
@@ -149,8 +150,6 @@ function onTimeInput(i, el) {
         if (next) next.focus();
       }, 50);
     }
-  } else {
-    el.classList.add('error');
   }
 }
 
@@ -190,31 +189,37 @@ function render() {
       <div class="session-header">
         <span class="session-title">セッション ${i + 1}</span>
       </div>
-      <div class="row3">
+      <div class="row2">
         <div class="field">
           <label>開始時刻${isAutoStart ? '（自動）' : ''}</label>
-          <input id="f-${i}-start" type="text" inputmode="numeric" placeholder="0855"
-            value="${s.start}" class="${isAutoStart ? 'auto-filled' : ''}"
-            ${isAutoStart ? 'readonly' : ''}
-            oninput="onTimeInput(${i},this)">
+          <div class="cell">
+            <input id="f-${i}-start" type="text" inputmode="numeric" placeholder="0855"
+              value="${s.start}" ${isAutoStart ? 'readonly' : ''}
+              oninput="onTimeInput(${i},this)">
+          </div>
         </div>
         <div class="field">
+          <label>終了時刻</label>
+          <div class="cell end-cell" id="end-${i}">${endMin !== null ? minToStr(endMin) : '—'}</div>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
           <label>ケア時間（分）</label>
-          <input id="f-${i}-elapsed" type="text" inputmode="numeric"
-            value="${s.elapsed}"
-            oninput="onElapsedInput(${i},this)">
+          <div class="cell">
+            <input id="f-${i}-elapsed" type="text" inputmode="numeric"
+              value="${s.elapsed}" oninput="onElapsedInput(${i},this)">
+          </div>
         </div>
         <div class="field">
           <label>インターバル(分)</label>
-          <input id="f-${i}-interval" type="text" inputmode="numeric" placeholder="5"
-            value="${s.interval}"
-            onfocus="onIntervalFocus(${i})"
-            oninput="onIntervalInput(${i},this)">
+          <div class="cell">
+            <input id="f-${i}-interval" type="text" inputmode="numeric" placeholder="5"
+              value="${s.interval}"
+              onfocus="onIntervalFocus(${i})"
+              oninput="onIntervalInput(${i},this)">
+          </div>
         </div>
-      </div>
-      <div class="end-row">
-        <span class="end-label">終了時刻</span>
-        <span class="end-time" id="end-${i}">${endMin !== null ? minToStr(endMin) : '—'}</span>
       </div>
       <div class="session-footer">
         ${isAutoStart && isLast ? `<span class="hint-text">ケア時間（分）を入力後インターバル（分）をタップすると次のセッションが追加されます</span>` : '<span></span>'}
