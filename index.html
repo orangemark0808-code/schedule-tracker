@@ -105,10 +105,22 @@ function calcEndMin(s) {
   return sm + el;
 }
 
-function calcNextStart(s) {
-  const end = calcEndMin(s);
-  const iv = parseInt(s.interval) || 0;
-  return end !== null ? minToStr(end + iv) : '';
+function propagateFrom(fromIdx) {
+  for (let j = fromIdx; j < sessions.length; j++) {
+    const s = sessions[j];
+    if (j > 0) {
+      const prev = sessions[j - 1];
+      const prevEnd = calcEndMin(prev);
+      const iv = parseInt(prev.interval) || 0;
+      const newStart = prevEnd !== null ? minToStr(prevEnd + iv) : '';
+      sessions[j].start = newStart;
+      const startEl = document.getElementById('s-' + s.id);
+      if (startEl) startEl.value = newStart;
+    }
+    const endMin = calcEndMin(s);
+    const endEl = document.getElementById('end-' + s.id);
+    if (endEl) endEl.textContent = endMin !== null ? minToStr(endMin) : '—';
+  }
 }
 
 function newSession(preStart) {
@@ -153,21 +165,16 @@ function onStartTimeInput(el) {
 
 function manualAdd() {
   const last = sessions.length > 0 ? sessions[sessions.length - 1] : null;
-  const nextStart = last ? calcNextStart(last) : globalStart;
+  const nextStart = last ? (() => { const e = calcEndMin(last); const iv = parseInt(last.interval) || 0; return e !== null ? minToStr(e + iv) : ''; })() : globalStart;
   sessions.push(newSession(nextStart));
   render();
 }
 
 function removeSession(id) {
+  const idx = sessions.findIndex(s => s.id === id);
   sessions = sessions.filter(s => s.id !== id);
   render();
-}
-
-function updateEndBadge(idx) {
-  const s = sessions[idx];
-  const endMin = calcEndMin(s);
-  const badge = document.getElementById('end-' + s.id);
-  if (badge) badge.textContent = endMin !== null ? minToStr(endMin) : '—';
+  if (idx > 0 && sessions.length > 0) propagateFrom(idx);
 }
 
 function onElapsedInput(id, el) {
@@ -176,7 +183,7 @@ function onElapsedInput(id, el) {
   const idx = sessions.findIndex(s => s.id === id);
   if (idx < 0) return;
   sessions[idx].elapsed = raw;
-  updateEndBadge(idx);
+  propagateFrom(idx);
 }
 
 function onIntervalInput(id, el) {
@@ -185,6 +192,7 @@ function onIntervalInput(id, el) {
   const idx = sessions.findIndex(s => s.id === id);
   if (idx < 0) return;
   sessions[idx].interval = raw;
+  propagateFrom(idx);
 }
 
 function onStartEdit(id, el) {
@@ -194,7 +202,7 @@ function onStartEdit(id, el) {
   const idx = sessions.findIndex(s => s.id === id);
   if (idx < 0) return;
   sessions[idx].start = raw;
-  updateEndBadge(idx);
+  propagateFrom(idx);
 }
 
 function render() {
@@ -212,7 +220,7 @@ function render() {
         <div class="field">
           <label>開始時刻${i > 0 ? '（自動）' : ''}</label>
           <div class="cell">
-            <input type="text" inputmode="numeric" placeholder="0855"
+            <input id="s-${s.id}" type="text" inputmode="numeric" placeholder="0855"
               value="${s.start}" ${i > 0 ? 'readonly' : ''}
               oninput="onStartEdit(${s.id},this)">
           </div>
