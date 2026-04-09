@@ -25,13 +25,17 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-ser
 .session-title { font-size: 14px; font-weight: 600; color: #99355a; background: #fce8f0; border-radius: 8px; padding: 3px 10px; }
 .session-badge { font-size: 12px; font-weight: 500; color: #aaa; background: #f0f0f0; border-radius: 8px; padding: 3px 10px; }
 .session-badge.done { color: #fff; background: #c2628a; }
-.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
-.field { display: flex; flex-direction: column; gap: 4px; }
-.field label { font-size: 12px; color: #444; font-weight: 500; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; align-items: end; }
+.field { display: flex; flex-direction: column; }
+.field-label-row { margin-bottom: 4px; display: flex; align-items: baseline; gap: 6px; }
+.field-label-row span { font-size: 12px; color: #444; font-weight: 500; }
+.edit-link { font-size: 12px; font-weight: 500; color: #c2628a; background: none; border: none; padding: 0; margin: 0; cursor: pointer; text-decoration: underline; line-height: 1; display: inline; }
+.edit-link.active { color: #888; }
 .cell { width: 100%; border: 1px solid #f4c0d1; border-radius: 8px; background: #fff; height: 56px; display: flex; align-items: center; justify-content: center; }
 .cell input { width: 100%; height: 100%; font-size: 24px !important; font-weight: 600; color: #111; text-align: center; padding: 0; margin: 0; }
 .cell input::placeholder { color: #bbb; font-weight: 400; font-size: 15px !important; }
 .cell.end-cell { background: #fdf4f8; font-size: 24px; font-weight: 600; color: #72243e; }
+.cell.manual { background: #fff8e1; border-color: #f0c040; }
 .cell:focus-within { border-color: #d4537e; box-shadow: 0 0 0 3px #fce8f0 !important; }
 .hint { font-size: 11px; color: #bbb; text-align: center; margin-bottom: 0.75rem; }
 .add-btn { width: 100%; margin-top: 0.25rem; padding: 14px; border: 1.5px dashed #f4c0d1; border-radius: 12px; background: transparent; color: #d4537e; font-size: 16px; cursor: pointer; }
@@ -111,7 +115,7 @@ function calcEndMin(s) {
 function propagateFrom(fromIdx) {
   for (let j = fromIdx; j < sessions.length; j++) {
     const s = sessions[j];
-    if (j > 0) {
+    if (j > 0 && !sessions[j].manualStart) {
       const prev = sessions[j - 1];
       const prevEnd = calcEndMin(prev);
       const iv = parseInt(prev.interval) || 0;
@@ -127,7 +131,7 @@ function propagateFrom(fromIdx) {
 }
 
 function newSession(preStart) {
-  return { id: nextId++, start: preStart || '', elapsed: randomElapsed(), interval: '5', done: false };
+  return { id: nextId++, start: preStart || '', elapsed: randomElapsed(), interval: '5', done: false, manualStart: false };
 }
 
 function toggleDone(id) {
@@ -137,17 +141,25 @@ function toggleDone(id) {
   const card = document.getElementById('card-' + id);
   const badge = document.getElementById('badge-' + id);
   if (card) card.classList.toggle('done', s.done);
-  if (badge) {
-    badge.textContent = s.done ? '転記済み' : 'タップで転記済み';
-    badge.classList.toggle('done', s.done);
-  }
+  if (badge) { badge.textContent = s.done ? '転記済み' : 'タップで転記済み'; badge.classList.toggle('done', s.done); }
+}
+
+function toggleManualStart(id) {
+  const idx = sessions.findIndex(s => s.id === id);
+  if (idx < 0) return;
+  sessions[idx].manualStart = !sessions[idx].manualStart;
+  if (!sessions[idx].manualStart) propagateFrom(idx);
+  const btn = document.getElementById('editbtn-' + id);
+  const cell = document.getElementById('startcell-' + id);
+  const input = document.getElementById('s-' + id);
+  if (btn) { btn.textContent = sessions[idx].manualStart ? '自動に戻す' : '編集'; btn.classList.toggle('active', sessions[idx].manualStart); }
+  if (cell) cell.classList.toggle('manual', sessions[idx].manualStart);
+  if (input) input.readOnly = !sessions[idx].manualStart;
 }
 
 function generateSessions() {
   if (numPeople <= 0 || !parseTime(globalStart)) return;
-  elapsedHistory = [];
-  sessions = [];
-  nextId = 1;
+  elapsedHistory = []; sessions = []; nextId = 1;
   let start = globalStart;
   for (let i = 0; i < numPeople; i++) {
     const s = newSession(start);
@@ -171,12 +183,7 @@ function onStartTimeInput(el) {
   if (raw.length >= 3) raw = raw.slice(0, 2) + ':' + raw.slice(2, 4);
   el.value = raw;
   const parsed = parseTime(raw);
-  if (parsed !== null) {
-    globalStart = raw;
-    generateSessions();
-  } else {
-    globalStart = '';
-  }
+  if (parsed !== null) { globalStart = raw; generateSessions(); } else { globalStart = ''; }
 }
 
 function manualAdd() {
@@ -219,6 +226,7 @@ function render() {
   container.innerHTML = '';
   sessions.forEach((s, i) => {
     const endMin = calcEndMin(s);
+    const isAuto = i > 0;
     const div = document.createElement('div');
     div.className = 'session' + (s.done ? ' done' : '');
     div.id = 'card-' + s.id;
@@ -229,31 +237,32 @@ function render() {
       </div>
       <div class="row2">
         <div class="field">
-          <label>開始時刻${i > 0 ? '（自動）' : ''}</label>
-          <div class="cell">
+          <div class="field-label-row">
+            <span>開始時刻${isAuto ? '（自動）' : ''}</span>
+            ${isAuto ? `<button id="editbtn-${s.id}" class="edit-link ${s.manualStart ? 'active' : ''}" onclick="event.stopPropagation();toggleManualStart(${s.id})">${s.manualStart ? '自動に戻す' : '編集'}</button>` : ''}
+          </div>
+          <div class="cell ${s.manualStart ? 'manual' : ''}" id="startcell-${s.id}">
             <input id="s-${s.id}" type="text" inputmode="numeric" placeholder="0855"
-              value="${s.start}" ${i > 0 ? 'readonly' : ''}
+              value="${s.start}" ${isAuto && !s.manualStart ? 'readonly' : ''}
               oninput="onStartEdit(${s.id},this)">
           </div>
         </div>
         <div class="field">
-          <label>終了時刻</label>
+          <div class="field-label-row"><span>終了時刻</span></div>
           <div class="cell end-cell" id="end-${s.id}">${endMin !== null ? minToStr(endMin) : '—'}</div>
         </div>
       </div>
       <div class="row2">
         <div class="field">
-          <label>ケア時間（分）</label>
+          <div class="field-label-row"><span>ケア時間（分）</span></div>
           <div class="cell">
-            <input type="text" inputmode="numeric"
-              value="${s.elapsed}" oninput="onElapsedInput(${s.id},this)">
+            <input type="text" inputmode="numeric" value="${s.elapsed}" oninput="onElapsedInput(${s.id},this)">
           </div>
         </div>
         <div class="field">
-          <label>インターバル(分)</label>
+          <div class="field-label-row"><span>インターバル(分)</span></div>
           <div class="cell">
-            <input type="text" inputmode="numeric" placeholder="5"
-              value="${s.interval}" oninput="onIntervalInput(${s.id},this)">
+            <input type="text" inputmode="numeric" placeholder="5" value="${s.interval}" oninput="onIntervalInput(${s.id},this)">
           </div>
         </div>
       </div>
@@ -263,11 +272,7 @@ function render() {
 }
 
 function clearAll() {
-  elapsedHistory = [];
-  sessions = [];
-  numPeople = 0;
-  globalStart = '';
-  nextId = 1;
+  elapsedHistory = []; sessions = []; numPeople = 0; globalStart = ''; nextId = 1;
   document.getElementById('numPeople').value = '';
   document.getElementById('startTime').value = '';
   render();
