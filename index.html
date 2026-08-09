@@ -45,9 +45,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-ser
 .ival-btn.selected { background: #d4537e; color: #fff; border-color: #d4537e; }
 .copy-area { margin-bottom: 1rem; }
 .copy-btn { width: 100%; padding: 12px; border: 1px solid #f4c0d1; border-radius: 10px; background: #fce8f0; color: #99355a; font-size: 15px; font-weight: 600; cursor: pointer; }
-.copy-options { display: none; gap: 8px; margin-top: 8px; }
-.copy-options.show { display: flex; }
-.copy-opt-btn { flex: 1; padding: 12px; border: 1px solid #f4c0d1; border-radius: 10px; background: #fff; color: #c2628a; font-size: 14px; font-weight: 500; cursor: pointer; }
 .copy-toast { font-size: 12px; color: #c2628a; text-align: center; margin-top: 6px; min-height: 16px; }
 </style>
 </head>
@@ -73,11 +70,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-ser
     </div>
   </div>
   <div class="copy-area">
-    <button class="copy-btn" onclick="toggleCopyOptions()">コピー</button>
-    <div id="copyOptions" class="copy-options">
-      <button class="copy-opt-btn" onclick="doCopy('all')">全件コピー</button>
-      <button class="copy-opt-btn" onclick="doCopy('done')">転記済みのみコピー</button>
-    </div>
+    <button class="copy-btn" onclick="doCopy()">全件コピー</button>
     <div id="copyToast" class="copy-toast"></div>
   </div>
   <p class="hint">セッション名をタップすると転記済みになります</p>
@@ -326,24 +319,18 @@ function render() {
   });
 }
 
-function toggleCopyOptions() {
-  document.getElementById('copyOptions').classList.toggle('show');
-}
-
 function showCopyToast(msg) {
   const toast = document.getElementById('copyToast');
   toast.textContent = msg;
   setTimeout(() => { if (toast.textContent === msg) toast.textContent = ''; }, 2000);
 }
 
-function doCopy(mode) {
-  const target = mode === 'done' ? sessions.filter(s => s.done) : sessions;
-  document.getElementById('copyOptions').classList.remove('show');
-  if (target.length === 0) {
-    showCopyToast(mode === 'done' ? '転記済みのセッションがありません' : 'セッションがありません');
+function doCopy() {
+  if (sessions.length === 0) {
+    showCopyToast('セッションがありません');
     return;
   }
-  const text = target.map(s => {
+  const text = sessions.map(s => {
     const endMin = calcEndMin(s);
     return [s.name || '', s.start || '', endMin !== null ? minToStr(endMin) : '', s.elapsed || ''].join('\t');
   }).join('\n');
