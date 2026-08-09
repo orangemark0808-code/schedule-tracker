@@ -40,6 +40,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-ser
 .hint { font-size: 11px; color: #bbb; text-align: center; margin-bottom: 0.75rem; }
 .add-btn { width: 100%; margin-top: 0.25rem; padding: 14px; border: 1.5px dashed #f4c0d1; border-radius: 12px; background: transparent; color: #d4537e; font-size: 16px; cursor: pointer; }
 .clear-btn { width: 100%; margin-top: 0.5rem; margin-bottom: 2rem; padding: 10px; border: 1px solid #ddd; border-radius: 8px; background: transparent; color: #aaa; font-size: 14px; cursor: pointer; }
+.interval-row { display: flex; gap: 8px; margin-bottom: 6px; }
+.ival-btn { flex: 1; height: 52px; border: 1px solid #f4c0d1; border-radius: 8px; background: #fff; color: #99355a; font-size: 15px; font-weight: 600; cursor: pointer; }
+.ival-btn.selected { background: #d4537e; color: #fff; border-color: #d4537e; }
+.copy-area { margin-bottom: 1rem; }
+.copy-btn { width: 100%; padding: 12px; border: 1px solid #f4c0d1; border-radius: 10px; background: #fce8f0; color: #99355a; font-size: 15px; font-weight: 600; cursor: pointer; }
+.copy-options { display: none; gap: 8px; margin-top: 8px; }
+.copy-options.show { display: flex; }
+.copy-opt-btn { flex: 1; padding: 12px; border: 1px solid #f4c0d1; border-radius: 10px; background: #fff; color: #c2628a; font-size: 14px; font-weight: 500; cursor: pointer; }
+.copy-toast { font-size: 12px; color: #c2628a; text-align: center; margin-top: 6px; min-height: 16px; }
 </style>
 </head>
 <body>
@@ -62,6 +71,14 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-ser
         <input id="startTime" type="text" inputmode="numeric" placeholder="0855" oninput="onStartTimeInput(this)">
       </div>
     </div>
+  </div>
+  <div class="copy-area">
+    <button class="copy-btn" onclick="toggleCopyOptions()">コピー</button>
+    <div id="copyOptions" class="copy-options">
+      <button class="copy-opt-btn" onclick="doCopy('all')">全件コピー</button>
+      <button class="copy-opt-btn" onclick="doCopy('done')">転記済みのみコピー</button>
+    </div>
+    <div id="copyToast" class="copy-toast"></div>
   </div>
   <p class="hint">セッション名をタップすると転記済みになります</p>
   <div id="sessions"></div>
@@ -131,7 +148,11 @@ function propagateFrom(fromIdx) {
 }
 
 function newSession(preStart) {
-  return { id: nextId++, start: preStart || '', elapsed: randomElapsed(), interval: '5', done: false, manualStart: false };
+  return { id: nextId++, name: '', start: preStart || '', elapsed: randomElapsed(), interval: '5', done: false, manualStart: false };
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
 function toggleDone(id) {
@@ -208,7 +229,31 @@ function onIntervalInput(id, el) {
   const idx = sessions.findIndex(s => s.id === id);
   if (idx < 0) return;
   sessions[idx].interval = raw;
+  updateIntervalButtons(id, raw);
   propagateFrom(idx);
+}
+
+function updateIntervalButtons(id, val) {
+  const btn5 = document.getElementById('ivalbtn5-' + id);
+  const btn7 = document.getElementById('ivalbtn7-' + id);
+  if (btn5) btn5.classList.toggle('selected', val === '5');
+  if (btn7) btn7.classList.toggle('selected', val === '7');
+}
+
+function chooseInterval(id, val) {
+  const idx = sessions.findIndex(s => s.id === id);
+  if (idx < 0) return;
+  sessions[idx].interval = val;
+  const inputEl = document.getElementById('ival-' + id);
+  if (inputEl) inputEl.value = val;
+  updateIntervalButtons(id, val);
+  propagateFrom(idx);
+}
+
+function onNameInput(id, el) {
+  const idx = sessions.findIndex(s => s.id === id);
+  if (idx < 0) return;
+  sessions[idx].name = el.value;
 }
 
 function onStartEdit(id, el) {
@@ -234,6 +279,12 @@ function render() {
       <div class="session-header" onclick="toggleDone(${s.id})">
         <span class="session-title">セッション ${s.id}</span>
         <span class="session-badge ${s.done ? 'done' : ''}" id="badge-${s.id}">${s.done ? '転記済み' : 'タップで転記済み'}</span>
+      </div>
+      <div class="field">
+        <div class="field-label-row"><span>氏名</span></div>
+        <div class="cell">
+          <input id="name-${s.id}" type="text" value="${escapeHtml(s.name || '')}" placeholder="氏名" oninput="onNameInput(${s.id},this)">
+        </div>
       </div>
       <div class="row2">
         <div class="field">
@@ -261,13 +312,45 @@ function render() {
         </div>
         <div class="field">
           <div class="field-label-row"><span>インターバル(分)</span></div>
+          <div class="interval-row">
+            <button type="button" id="ivalbtn5-${s.id}" class="ival-btn ${s.interval === '5' ? 'selected' : ''}" onclick="event.stopPropagation();chooseInterval(${s.id},'5')">5分</button>
+            <button type="button" id="ivalbtn7-${s.id}" class="ival-btn ${s.interval === '7' ? 'selected' : ''}" onclick="event.stopPropagation();chooseInterval(${s.id},'7')">7分</button>
+          </div>
           <div class="cell">
-            <input type="text" inputmode="numeric" placeholder="5" value="${s.interval}" oninput="onIntervalInput(${s.id},this)">
+            <input id="ival-${s.id}" type="text" inputmode="numeric" placeholder="5" value="${s.interval}" oninput="onIntervalInput(${s.id},this)">
           </div>
         </div>
       </div>
     `;
     container.appendChild(div);
+  });
+}
+
+function toggleCopyOptions() {
+  document.getElementById('copyOptions').classList.toggle('show');
+}
+
+function showCopyToast(msg) {
+  const toast = document.getElementById('copyToast');
+  toast.textContent = msg;
+  setTimeout(() => { if (toast.textContent === msg) toast.textContent = ''; }, 2000);
+}
+
+function doCopy(mode) {
+  const target = mode === 'done' ? sessions.filter(s => s.done) : sessions;
+  document.getElementById('copyOptions').classList.remove('show');
+  if (target.length === 0) {
+    showCopyToast(mode === 'done' ? '転記済みのセッションがありません' : 'セッションがありません');
+    return;
+  }
+  const text = target.map(s => {
+    const endMin = calcEndMin(s);
+    return [s.name || '', s.start || '', endMin !== null ? minToStr(endMin) : '', s.elapsed || ''].join('\t');
+  }).join('\n');
+  navigator.clipboard.writeText(text).then(() => {
+    showCopyToast('コピーしました');
+  }).catch(() => {
+    showCopyToast('コピーに失敗しました');
   });
 }
 
