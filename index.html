@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>スケジュール時間管理</title>
+<title>口腔ケア実績管理</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 input { border: none !important; outline: none !important; box-shadow: none !important; -webkit-appearance: none !important; appearance: none !important; background: transparent; }
@@ -40,9 +40,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-ser
 .hint { font-size: 11px; color: #bbb; text-align: center; margin-bottom: 0.75rem; }
 .add-btn { width: 100%; margin-top: 0.25rem; padding: 14px; border: 1.5px dashed #f4c0d1; border-radius: 12px; background: transparent; color: #d4537e; font-size: 16px; cursor: pointer; }
 .clear-btn { width: 100%; margin-top: 0.5rem; margin-bottom: 2rem; padding: 10px; border: 1px solid #ddd; border-radius: 8px; background: transparent; color: #aaa; font-size: 14px; cursor: pointer; }
-.interval-row { display: flex; gap: 8px; margin-bottom: 6px; }
-.ival-btn { flex: 1; height: 52px; border: 1px solid #f4c0d1; border-radius: 8px; background: #fff; color: #99355a; font-size: 15px; font-weight: 600; cursor: pointer; }
-.ival-btn.selected { background: #d4537e; color: #fff; border-color: #d4537e; }
 .copy-area { margin-bottom: 1rem; }
 .copy-btn { width: 100%; padding: 12px; border: 1px solid #f4c0d1; border-radius: 10px; background: #fce8f0; color: #99355a; font-size: 15px; font-weight: 600; cursor: pointer; }
 .copy-toast { font-size: 12px; color: #c2628a; text-align: center; margin-top: 6px; min-height: 16px; }
@@ -51,7 +48,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-ser
 <body>
 <div class="app">
   <div class="header">
-    <h1>スケジュール時間管理</h1>
+    <h1>口腔ケア実績管理</h1>
     <p>人数と開始時刻を入力してください</p>
     <p>ケア時間（分）はランダムで表示されます</p>
   </div>
@@ -81,24 +78,33 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-ser
 <script>
 let sessions = [];
 let elapsedHistory = [];
+let intervalHistory = [];
 let numPeople = 0;
 let globalStart = '';
 let nextId = 1;
 
 function pad(n) { return String(n).padStart(2, '0'); }
 
-function randomElapsed() {
+function randomInRange(min, max, history) {
   let val;
   do {
-    val = String(Math.floor(Math.random() * 6) + 20);
+    val = String(Math.floor(Math.random() * (max - min + 1)) + min);
   } while (
-    elapsedHistory.length >= 2 &&
-    elapsedHistory[elapsedHistory.length - 1] === val &&
-    elapsedHistory[elapsedHistory.length - 2] === val
+    history.length >= 2 &&
+    history[history.length - 1] === val &&
+    history[history.length - 2] === val
   );
-  elapsedHistory.push(val);
-  if (elapsedHistory.length > 2) elapsedHistory.shift();
+  history.push(val);
+  if (history.length > 2) history.shift();
   return val;
+}
+
+function randomElapsed() {
+  return randomInRange(21, 25, elapsedHistory);
+}
+
+function randomInterval() {
+  return randomInRange(4, 6, intervalHistory);
 }
 
 function parseTime(str) {
@@ -141,7 +147,7 @@ function propagateFrom(fromIdx) {
 }
 
 function newSession(preStart) {
-  return { id: nextId++, name: '', start: preStart || '', elapsed: randomElapsed(), interval: '5', done: false, manualStart: false };
+  return { id: nextId++, name: '', start: preStart || '', elapsed: randomElapsed(), interval: randomInterval(), done: false, manualStart: false };
 }
 
 function escapeHtml(str) {
@@ -173,7 +179,7 @@ function toggleManualStart(id) {
 
 function generateSessions() {
   if (numPeople <= 0 || !parseTime(globalStart)) return;
-  elapsedHistory = []; sessions = []; nextId = 1;
+  elapsedHistory = []; intervalHistory = []; sessions = []; nextId = 1;
   let start = globalStart;
   for (let i = 0; i < numPeople; i++) {
     const s = newSession(start);
@@ -222,24 +228,6 @@ function onIntervalInput(id, el) {
   const idx = sessions.findIndex(s => s.id === id);
   if (idx < 0) return;
   sessions[idx].interval = raw;
-  updateIntervalButtons(id, raw);
-  propagateFrom(idx);
-}
-
-function updateIntervalButtons(id, val) {
-  const btn5 = document.getElementById('ivalbtn5-' + id);
-  const btn7 = document.getElementById('ivalbtn7-' + id);
-  if (btn5) btn5.classList.toggle('selected', val === '5');
-  if (btn7) btn7.classList.toggle('selected', val === '7');
-}
-
-function chooseInterval(id, val) {
-  const idx = sessions.findIndex(s => s.id === id);
-  if (idx < 0) return;
-  sessions[idx].interval = val;
-  const inputEl = document.getElementById('ival-' + id);
-  if (inputEl) inputEl.value = val;
-  updateIntervalButtons(id, val);
   propagateFrom(idx);
 }
 
@@ -305,10 +293,6 @@ function render() {
         </div>
         <div class="field">
           <div class="field-label-row"><span>インターバル(分)</span></div>
-          <div class="interval-row">
-            <button type="button" id="ivalbtn5-${s.id}" class="ival-btn ${s.interval === '5' ? 'selected' : ''}" onclick="event.stopPropagation();chooseInterval(${s.id},'5')">5分</button>
-            <button type="button" id="ivalbtn7-${s.id}" class="ival-btn ${s.interval === '7' ? 'selected' : ''}" onclick="event.stopPropagation();chooseInterval(${s.id},'7')">7分</button>
-          </div>
           <div class="cell">
             <input id="ival-${s.id}" type="text" inputmode="numeric" placeholder="5" value="${s.interval}" oninput="onIntervalInput(${s.id},this)">
           </div>
@@ -342,7 +326,7 @@ function doCopy() {
 }
 
 function clearAll() {
-  elapsedHistory = []; sessions = []; numPeople = 0; globalStart = ''; nextId = 1;
+  elapsedHistory = []; intervalHistory = []; sessions = []; numPeople = 0; globalStart = ''; nextId = 1;
   document.getElementById('numPeople').value = '';
   document.getElementById('startTime').value = '';
   render();
