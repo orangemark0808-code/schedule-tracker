@@ -28,12 +28,9 @@ body.theme-doctor { background: #eef3fb; }
 .top-cell input { font-size: 24px !important; font-weight: 600; color: #111; text-align: center; width: 100%; height: 100%; padding: 0; margin: 0; }
 .top-cell input::placeholder { color: #bbb; font-weight: 400; font-size: 15px !important; }
 
-.session { background: #fff; border-radius: 12px; padding: 0.9rem 1rem; margin-bottom: 0.75rem; transition: opacity 0.2s; }
-.session.done { opacity: 0.35; }
-.session-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; cursor: pointer; user-select: none; }
+.session { background: #fff; border-radius: 12px; padding: 0.9rem 1rem; margin-bottom: 0.75rem; }
+.session-header { display: flex; align-items: center; margin-bottom: 0.75rem; }
 .session-title { font-size: 14px; font-weight: 600; border-radius: 8px; padding: 3px 10px; }
-.session-badge { font-size: 12px; font-weight: 500; color: #aaa; background: #f0f0f0; border-radius: 8px; padding: 3px 10px; }
-.session-badge.done { color: #fff; }
 .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; align-items: end; }
 .field { display: flex; flex-direction: column; }
 .field-label-row { margin-bottom: 4px; display: flex; align-items: baseline; gap: 6px; }
@@ -44,7 +41,6 @@ body.theme-doctor { background: #eef3fb; }
 .cell input { width: 100%; height: 100%; font-size: 24px !important; font-weight: 600; color: #111; text-align: center; padding: 0; margin: 0; }
 .cell input::placeholder { color: #bbb; font-weight: 400; font-size: 15px !important; }
 .cell.end-cell { font-size: 24px; font-weight: 600; }
-.hint { font-size: 11px; color: #bbb; text-align: center; margin-bottom: 0.75rem; }
 .add-btn { width: 100%; margin-top: 0.25rem; padding: 14px; border-radius: 12px; background: transparent; font-size: 16px; cursor: pointer; }
 .clear-btn { width: 100%; margin-top: 0.5rem; margin-bottom: 2rem; padding: 10px; border: 1px solid #ddd; border-radius: 8px; background: transparent; color: #aaa; font-size: 14px; cursor: pointer; }
 .copy-area { margin-bottom: 1rem; }
@@ -63,7 +59,6 @@ body.theme-doctor { background: #eef3fb; }
 .tab-panel .header h1 { color: var(--accent-dark); }
 .tab-panel .session { border: 1px solid var(--border); }
 .tab-panel .session-title { color: var(--accent-dark); background: var(--bg-soft); }
-.tab-panel .session-badge.done { background: var(--accent-dark); }
 .tab-panel .edit-link { color: var(--accent-dark); }
 .tab-panel .cell { border: 1px solid var(--border); }
 .tab-panel .cell.end-cell { background: var(--bg-softer); color: var(--accent-darker); }
@@ -105,7 +100,6 @@ body.theme-doctor { background: #eef3fb; }
       <button class="copy-btn" onclick="doCopy('oral')">全件コピー</button>
       <div id="oral-copyToast" class="copy-toast"></div>
     </div>
-    <p class="hint">セッション名をタップすると転記済みになります</p>
     <div id="oral-sessions"></div>
     <button class="add-btn" onclick="manualAdd('oral')">＋ セッションを手動追加</button>
     <button class="clear-btn" onclick="clearAll('oral')">すべてリセット</button>
@@ -135,7 +129,6 @@ body.theme-doctor { background: #eef3fb; }
       <button class="copy-btn" onclick="doCopy('doctor')">全件コピー</button>
       <div id="doctor-copyToast" class="copy-toast"></div>
     </div>
-    <p class="hint">セッション名をタップすると転記済みになります</p>
     <div id="doctor-sessions"></div>
     <button class="add-btn" onclick="manualAdd('doctor')">＋ セッションを手動追加</button>
     <button class="clear-btn" onclick="clearAll('doctor')">すべてリセット</button>
@@ -240,22 +233,11 @@ function propagateFrom(tab, fromIdx) {
 }
 
 function newSession(state, cfg, preStart) {
-  return { id: state.nextId++, name: '', start: preStart || '', elapsed: randomElapsed(state, cfg), interval: randomInterval(state, cfg), done: false, manualStart: false };
+  return { id: state.nextId++, name: '', start: preStart || '', elapsed: randomElapsed(state, cfg), interval: randomInterval(state, cfg), manualStart: false };
 }
 
 function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-}
-
-function toggleDone(tab, id) {
-  const state = STATE[tab];
-  const s = state.sessions.find(s => s.id === id);
-  if (!s) return;
-  s.done = !s.done;
-  const card = document.getElementById(tab + '-card-' + id);
-  const badge = document.getElementById(tab + '-badge-' + id);
-  if (card) card.classList.toggle('done', s.done);
-  if (badge) { badge.textContent = s.done ? '転記済み' : 'タップで転記済み'; badge.classList.toggle('done', s.done); }
 }
 
 function toggleManualStart(tab, id) {
@@ -359,12 +341,11 @@ function render(tab) {
     const endMin = calcEndMin(s);
     const isAuto = i > 0;
     const div = document.createElement('div');
-    div.className = 'session' + (s.done ? ' done' : '');
+    div.className = 'session';
     div.id = tab + '-card-' + s.id;
     div.innerHTML = `
-      <div class="session-header" onclick="toggleDone('${tab}',${s.id})">
+      <div class="session-header">
         <span class="session-title">セッション ${s.id}</span>
-        <span class="session-badge ${s.done ? 'done' : ''}" id="${tab}-badge-${s.id}">${s.done ? '転記済み' : 'タップで転記済み'}</span>
       </div>
       ${cfg.hasName ? `
       <div class="field">
