@@ -3,85 +3,177 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>口腔ケア実績管理</title>
+<title>実績管理</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 input { border: none !important; outline: none !important; box-shadow: none !important; -webkit-appearance: none !important; appearance: none !important; background: transparent; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; background: #fff5f9; min-height: 100vh; }
-.app { max-width: 480px; margin: 0 auto; padding: 1rem; }
-.header { text-align: center; margin-bottom: 1rem; padding-top: 0.5rem; }
-.header h1 { font-size: 20px; font-weight: 600; color: #c2628a; margin-bottom: 4px; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; background: #fff5f9; min-height: 100vh; transition: background 0.15s; }
+body.theme-doctor { background: #eef3fb; }
+.app { max-width: 480px; margin: 0 auto; padding: 0.75rem 1rem 1rem; }
+
+/* タブ */
+.tabbar { position: sticky; top: 0; z-index: 10; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: inherit; padding: 0.5rem 0 0.75rem; }
+.tab-btn { height: 48px; border-radius: 10px; border: 1.5px solid transparent; font-size: 15px; font-weight: 600; cursor: pointer; background: #f0f0f0; color: #888; }
+.tab-btn.active.tab-oral { background: #fce8f0; color: #99355a; border-color: #d4537e; }
+.tab-btn.active.tab-doctor { background: #e3ecfb; color: #1e3a8a; border-color: #2952c8; }
+
+.header { text-align: center; margin-bottom: 1rem; padding-top: 0.25rem; }
+.header h1 { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
 .header p { font-size: 13px; color: #999; margin-bottom: 2px; }
-.top-card { background: #fce8f0; border: 1px solid #f4c0d1; border-radius: 12px; padding: 0.75rem 1rem; margin-bottom: 1rem; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+.top-card { border-radius: 12px; padding: 0.75rem 1rem; margin-bottom: 1rem; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .top-field { display: flex; flex-direction: column; gap: 4px; }
-.top-field label { font-size: 12px; color: #99355a; font-weight: 500; }
-.top-cell { background: #fff; border: 1px solid #f4c0d1; border-radius: 8px; height: 52px; display: flex; align-items: center; justify-content: center; }
+.top-field label { font-size: 12px; font-weight: 500; }
+.top-cell { background: #fff; border-radius: 8px; height: 52px; display: flex; align-items: center; justify-content: center; }
 .top-cell input { font-size: 24px !important; font-weight: 600; color: #111; text-align: center; width: 100%; height: 100%; padding: 0; margin: 0; }
 .top-cell input::placeholder { color: #bbb; font-weight: 400; font-size: 15px !important; }
-.top-cell:focus-within { border-color: #d4537e; box-shadow: 0 0 0 3px #fce8f0 !important; }
-.session { background: #fff; border: 1px solid #f4c0d1; border-radius: 12px; padding: 0.9rem 1rem; margin-bottom: 0.75rem; transition: opacity 0.2s; }
+
+.session { background: #fff; border-radius: 12px; padding: 0.9rem 1rem; margin-bottom: 0.75rem; transition: opacity 0.2s; }
 .session.done { opacity: 0.35; }
 .session-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; cursor: pointer; user-select: none; }
-.session-title { font-size: 14px; font-weight: 600; color: #99355a; background: #fce8f0; border-radius: 8px; padding: 3px 10px; }
+.session-title { font-size: 14px; font-weight: 600; border-radius: 8px; padding: 3px 10px; }
 .session-badge { font-size: 12px; font-weight: 500; color: #aaa; background: #f0f0f0; border-radius: 8px; padding: 3px 10px; }
-.session-badge.done { color: #fff; background: #c2628a; }
+.session-badge.done { color: #fff; }
 .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; align-items: end; }
 .field { display: flex; flex-direction: column; }
 .field-label-row { margin-bottom: 4px; display: flex; align-items: baseline; gap: 6px; }
 .field-label-row span { font-size: 12px; color: #444; font-weight: 500; }
-.edit-link { font-size: 12px; font-weight: 500; color: #c2628a; background: none; border: none; padding: 0; margin: 0; cursor: pointer; text-decoration: underline; line-height: 1; display: inline; }
+.edit-link { font-size: 12px; font-weight: 500; background: none; border: none; padding: 0; margin: 0; cursor: pointer; text-decoration: underline; line-height: 1; display: inline; }
 .edit-link.active { color: #888; }
-.cell { width: 100%; border: 1px solid #f4c0d1; border-radius: 8px; background: #fff; height: 56px; display: flex; align-items: center; justify-content: center; }
+.cell { width: 100%; border-radius: 8px; background: #fff; height: 56px; display: flex; align-items: center; justify-content: center; }
 .cell input { width: 100%; height: 100%; font-size: 24px !important; font-weight: 600; color: #111; text-align: center; padding: 0; margin: 0; }
 .cell input::placeholder { color: #bbb; font-weight: 400; font-size: 15px !important; }
-.cell.end-cell { background: #fdf4f8; font-size: 24px; font-weight: 600; color: #72243e; }
-.cell.manual { background: #fff8e1; border-color: #f0c040; }
-.cell:focus-within { border-color: #d4537e; box-shadow: 0 0 0 3px #fce8f0 !important; }
+.cell.end-cell { font-size: 24px; font-weight: 600; }
 .hint { font-size: 11px; color: #bbb; text-align: center; margin-bottom: 0.75rem; }
-.add-btn { width: 100%; margin-top: 0.25rem; padding: 14px; border: 1.5px dashed #f4c0d1; border-radius: 12px; background: transparent; color: #d4537e; font-size: 16px; cursor: pointer; }
+.add-btn { width: 100%; margin-top: 0.25rem; padding: 14px; border-radius: 12px; background: transparent; font-size: 16px; cursor: pointer; }
 .clear-btn { width: 100%; margin-top: 0.5rem; margin-bottom: 2rem; padding: 10px; border: 1px solid #ddd; border-radius: 8px; background: transparent; color: #aaa; font-size: 14px; cursor: pointer; }
 .copy-area { margin-bottom: 1rem; }
-.copy-btn { width: 100%; padding: 12px; border: 1px solid #f4c0d1; border-radius: 10px; background: #fce8f0; color: #99355a; font-size: 15px; font-weight: 600; cursor: pointer; }
-.copy-toast { font-size: 12px; color: #c2628a; text-align: center; margin-top: 6px; min-height: 16px; }
+.copy-btn { width: 100%; padding: 12px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; }
+.copy-toast { font-size: 12px; text-align: center; margin-top: 6px; min-height: 16px; }
+
+/* 口腔ケア（ピンク系） */
+.tab-panel.oral { --accent: #d4537e; --accent-dark: #99355a; --accent-darker: #72243e; --border: #f4c0d1; --bg-soft: #fce8f0; --bg-softer: #fdf4f8; --manual-bg: #fff8e1; --manual-border: #f0c040; }
+/* ドクター訪問（ロイヤルブルー系） */
+.tab-panel.doctor { --accent: #2952c8; --accent-dark: #1e3a8a; --accent-darker: #16265c; --border: #b9cdf2; --bg-soft: #e3ecfb; --bg-softer: #eef4ff; --manual-bg: #fff8e1; --manual-border: #f0c040; }
+
+.tab-panel .top-card { background: var(--bg-soft); border: 1px solid var(--border); }
+.tab-panel .top-field label { color: var(--accent-dark); }
+.tab-panel .top-cell { border: 1px solid var(--border); }
+.tab-panel .top-cell:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--bg-soft) !important; }
+.tab-panel .header h1 { color: var(--accent-dark); }
+.tab-panel .session { border: 1px solid var(--border); }
+.tab-panel .session-title { color: var(--accent-dark); background: var(--bg-soft); }
+.tab-panel .session-badge.done { background: var(--accent-dark); }
+.tab-panel .edit-link { color: var(--accent-dark); }
+.tab-panel .cell { border: 1px solid var(--border); }
+.tab-panel .cell.end-cell { background: var(--bg-softer); color: var(--accent-darker); }
+.tab-panel .cell.manual { background: var(--manual-bg); border-color: var(--manual-border); }
+.tab-panel .cell:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--bg-soft) !important; }
+.tab-panel .add-btn { border: 1.5px dashed var(--border); color: var(--accent); }
+.tab-panel .copy-btn { border: 1px solid var(--border); background: var(--bg-soft); color: var(--accent-dark); }
+.tab-panel .copy-toast { color: var(--accent-dark); }
 </style>
 </head>
-<body>
+<body id="body">
 <div class="app">
-  <div class="header">
-    <h1>口腔ケア実績管理</h1>
-    <p>人数と開始時刻を入力してください</p>
-    <p>ケア時間（分）はランダムで表示されます</p>
+  <div class="tabbar">
+    <button id="tabbtn-oral" class="tab-btn tab-oral active" onclick="switchTab('oral')">口腔ケア実績管理</button>
+    <button id="tabbtn-doctor" class="tab-btn tab-doctor" onclick="switchTab('doctor')">ドクター訪問実績</button>
   </div>
-  <div class="top-card">
-    <div class="top-field">
-      <label>人数</label>
-      <div class="top-cell">
-        <input id="numPeople" type="text" inputmode="numeric" placeholder="5" oninput="onPeopleInput(this)">
+
+  <div id="panel-oral" class="tab-panel oral">
+    <div class="header">
+      <h1>口腔ケア実績管理</h1>
+      <p>人数と開始時刻を入力してください</p>
+      <p>ケア時間（分）はランダムで表示されます</p>
+    </div>
+    <div class="top-card">
+      <div class="top-field">
+        <label>人数</label>
+        <div class="top-cell">
+          <input id="oral-numPeople" type="text" inputmode="numeric" placeholder="5" oninput="onPeopleInput('oral', this)">
+        </div>
+      </div>
+      <div class="top-field">
+        <label>開始時刻</label>
+        <div class="top-cell">
+          <input id="oral-startTime" type="text" inputmode="numeric" placeholder="0855" oninput="onStartTimeInput('oral', this)">
+        </div>
       </div>
     </div>
-    <div class="top-field">
-      <label>開始時刻</label>
-      <div class="top-cell">
-        <input id="startTime" type="text" inputmode="numeric" placeholder="0855" oninput="onStartTimeInput(this)">
+    <div class="copy-area">
+      <button class="copy-btn" onclick="doCopy('oral')">全件コピー</button>
+      <div id="oral-copyToast" class="copy-toast"></div>
+    </div>
+    <p class="hint">セッション名をタップすると転記済みになります</p>
+    <div id="oral-sessions"></div>
+    <button class="add-btn" onclick="manualAdd('oral')">＋ セッションを手動追加</button>
+    <button class="clear-btn" onclick="clearAll('oral')">すべてリセット</button>
+  </div>
+
+  <div id="panel-doctor" class="tab-panel doctor" hidden>
+    <div class="header">
+      <h1>ドクター訪問実績</h1>
+      <p>人数と開始時刻を入力してください</p>
+      <p>処置時間（分）はランダムで表示されます</p>
+    </div>
+    <div class="top-card">
+      <div class="top-field">
+        <label>人数</label>
+        <div class="top-cell">
+          <input id="doctor-numPeople" type="text" inputmode="numeric" placeholder="5" oninput="onPeopleInput('doctor', this)">
+        </div>
+      </div>
+      <div class="top-field">
+        <label>開始時刻</label>
+        <div class="top-cell">
+          <input id="doctor-startTime" type="text" inputmode="numeric" placeholder="0855" oninput="onStartTimeInput('doctor', this)">
+        </div>
       </div>
     </div>
+    <div class="copy-area">
+      <button class="copy-btn" onclick="doCopy('doctor')">全件コピー</button>
+      <div id="doctor-copyToast" class="copy-toast"></div>
+    </div>
+    <p class="hint">セッション名をタップすると転記済みになります</p>
+    <div id="doctor-sessions"></div>
+    <button class="add-btn" onclick="manualAdd('doctor')">＋ セッションを手動追加</button>
+    <button class="clear-btn" onclick="clearAll('doctor')">すべてリセット</button>
   </div>
-  <div class="copy-area">
-    <button class="copy-btn" onclick="doCopy()">全件コピー</button>
-    <div id="copyToast" class="copy-toast"></div>
-  </div>
-  <p class="hint">セッション名をタップすると転記済みになります</p>
-  <div id="sessions"></div>
-  <button class="add-btn" onclick="manualAdd()">＋ セッションを手動追加</button>
-  <button class="clear-btn" onclick="clearAll()">すべてリセット</button>
 </div>
 <script>
-let sessions = [];
-let elapsedHistory = [];
-let intervalHistory = [];
-let numPeople = 0;
-let globalStart = '';
-let nextId = 1;
+// タブごとの設定（分数レンジ・ラベル文言・氏名欄有無）
+const CONFIG = {
+  oral: {
+    minElapsed: 21, maxElapsed: 25,
+    minInterval: 4, maxInterval: 6,
+    elapsedLabel: 'ケア時間（分）',
+    hasName: true
+  },
+  doctor: {
+    minElapsed: 7, maxElapsed: 9,
+    minInterval: 3, maxInterval: 5,
+    elapsedLabel: '処置時間（分）',
+    hasName: false
+  }
+};
+
+// タブごとの状態（タブ切替でリセットされない）
+function createState() {
+  return { sessions: [], elapsedHistory: [], intervalHistory: [], numPeople: 0, globalStart: '', nextId: 1 };
+}
+const STATE = { oral: createState(), doctor: createState() };
+
+let activeTab = 'oral';
+
+function switchTab(tab) {
+  activeTab = tab;
+  document.getElementById('panel-oral').hidden = tab !== 'oral';
+  document.getElementById('panel-doctor').hidden = tab !== 'doctor';
+  document.getElementById('tabbtn-oral').classList.toggle('active', tab === 'oral');
+  document.getElementById('tabbtn-doctor').classList.toggle('active', tab === 'doctor');
+  document.getElementById('body').classList.toggle('theme-doctor', tab === 'doctor');
+}
 
 function pad(n) { return String(n).padStart(2, '0'); }
 
@@ -99,12 +191,12 @@ function randomInRange(min, max, history) {
   return val;
 }
 
-function randomElapsed() {
-  return randomInRange(21, 25, elapsedHistory);
+function randomElapsed(state, cfg) {
+  return randomInRange(cfg.minElapsed, cfg.maxElapsed, state.elapsedHistory);
 }
 
-function randomInterval() {
-  return randomInRange(4, 6, intervalHistory);
+function randomInterval(state, cfg) {
+  return randomInRange(cfg.minInterval, cfg.maxInterval, state.intervalHistory);
 }
 
 function parseTime(str) {
@@ -128,173 +220,187 @@ function calcEndMin(s) {
   return sm + el;
 }
 
-function propagateFrom(fromIdx) {
-  for (let j = fromIdx; j < sessions.length; j++) {
-    const s = sessions[j];
-    if (j > 0 && !sessions[j].manualStart) {
-      const prev = sessions[j - 1];
+function propagateFrom(tab, fromIdx) {
+  const state = STATE[tab];
+  for (let j = fromIdx; j < state.sessions.length; j++) {
+    const s = state.sessions[j];
+    if (j > 0 && !state.sessions[j].manualStart) {
+      const prev = state.sessions[j - 1];
       const prevEnd = calcEndMin(prev);
       const iv = parseInt(prev.interval) || 0;
       const newStart = prevEnd !== null ? minToStr(prevEnd + iv) : '';
-      sessions[j].start = newStart;
-      const startEl = document.getElementById('s-' + s.id);
+      state.sessions[j].start = newStart;
+      const startEl = document.getElementById(tab + '-s-' + s.id);
       if (startEl) startEl.value = newStart;
     }
     const endMin = calcEndMin(s);
-    const endEl = document.getElementById('end-' + s.id);
+    const endEl = document.getElementById(tab + '-end-' + s.id);
     if (endEl) endEl.textContent = endMin !== null ? minToStr(endMin) : '—';
   }
 }
 
-function newSession(preStart) {
-  return { id: nextId++, name: '', start: preStart || '', elapsed: randomElapsed(), interval: randomInterval(), done: false, manualStart: false };
+function newSession(state, cfg, preStart) {
+  return { id: state.nextId++, name: '', start: preStart || '', elapsed: randomElapsed(state, cfg), interval: randomInterval(state, cfg), done: false, manualStart: false };
 }
 
 function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
-function toggleDone(id) {
-  const s = sessions.find(s => s.id === id);
+function toggleDone(tab, id) {
+  const state = STATE[tab];
+  const s = state.sessions.find(s => s.id === id);
   if (!s) return;
   s.done = !s.done;
-  const card = document.getElementById('card-' + id);
-  const badge = document.getElementById('badge-' + id);
+  const card = document.getElementById(tab + '-card-' + id);
+  const badge = document.getElementById(tab + '-badge-' + id);
   if (card) card.classList.toggle('done', s.done);
   if (badge) { badge.textContent = s.done ? '転記済み' : 'タップで転記済み'; badge.classList.toggle('done', s.done); }
 }
 
-function toggleManualStart(id) {
-  const idx = sessions.findIndex(s => s.id === id);
+function toggleManualStart(tab, id) {
+  const state = STATE[tab];
+  const idx = state.sessions.findIndex(s => s.id === id);
   if (idx < 0) return;
-  sessions[idx].manualStart = !sessions[idx].manualStart;
-  if (!sessions[idx].manualStart) propagateFrom(idx);
-  const btn = document.getElementById('editbtn-' + id);
-  const cell = document.getElementById('startcell-' + id);
-  const input = document.getElementById('s-' + id);
-  if (btn) { btn.textContent = sessions[idx].manualStart ? '自動に戻す' : '編集'; btn.classList.toggle('active', sessions[idx].manualStart); }
-  if (cell) cell.classList.toggle('manual', sessions[idx].manualStart);
-  if (input) input.readOnly = !sessions[idx].manualStart;
+  state.sessions[idx].manualStart = !state.sessions[idx].manualStart;
+  if (!state.sessions[idx].manualStart) propagateFrom(tab, idx);
+  const btn = document.getElementById(tab + '-editbtn-' + id);
+  const cell = document.getElementById(tab + '-startcell-' + id);
+  const input = document.getElementById(tab + '-s-' + id);
+  if (btn) { btn.textContent = state.sessions[idx].manualStart ? '自動に戻す' : '編集'; btn.classList.toggle('active', state.sessions[idx].manualStart); }
+  if (cell) cell.classList.toggle('manual', state.sessions[idx].manualStart);
+  if (input) input.readOnly = !state.sessions[idx].manualStart;
 }
 
-function generateSessions() {
-  if (numPeople <= 0 || !parseTime(globalStart)) return;
-  elapsedHistory = []; intervalHistory = []; sessions = []; nextId = 1;
-  let start = globalStart;
-  for (let i = 0; i < numPeople; i++) {
-    const s = newSession(start);
-    sessions.push(s);
+function generateSessions(tab) {
+  const state = STATE[tab];
+  const cfg = CONFIG[tab];
+  if (state.numPeople <= 0 || !parseTime(state.globalStart)) return;
+  state.elapsedHistory = []; state.intervalHistory = []; state.sessions = []; state.nextId = 1;
+  let start = state.globalStart;
+  for (let i = 0; i < state.numPeople; i++) {
+    const s = newSession(state, cfg, start);
+    state.sessions.push(s);
     const end = calcEndMin(s);
     const iv = parseInt(s.interval) || 0;
     start = end !== null ? minToStr(end + iv) : '';
   }
-  render();
+  render(tab);
 }
 
-function onPeopleInput(el) {
+function onPeopleInput(tab, el) {
   const raw = el.value.replace(/[^\d]/g, '');
   el.value = raw;
-  numPeople = parseInt(raw) || 0;
-  generateSessions();
+  STATE[tab].numPeople = parseInt(raw) || 0;
+  generateSessions(tab);
 }
 
-function onStartTimeInput(el) {
+function onStartTimeInput(tab, el) {
   let raw = el.value.replace(/[^\d]/g, '');
   if (raw.length >= 3) raw = raw.slice(0, 2) + ':' + raw.slice(2, 4);
   el.value = raw;
   const parsed = parseTime(raw);
-  if (parsed !== null) { globalStart = raw; generateSessions(); } else { globalStart = ''; }
+  if (parsed !== null) { STATE[tab].globalStart = raw; generateSessions(tab); } else { STATE[tab].globalStart = ''; }
 }
 
-function manualAdd() {
-  const last = sessions.length > 0 ? sessions[sessions.length - 1] : null;
-  const nextStart = last ? (() => { const e = calcEndMin(last); const iv = parseInt(last.interval) || 0; return e !== null ? minToStr(e + iv) : ''; })() : globalStart;
-  sessions.push(newSession(nextStart));
-  render();
+function manualAdd(tab) {
+  const state = STATE[tab];
+  const cfg = CONFIG[tab];
+  const last = state.sessions.length > 0 ? state.sessions[state.sessions.length - 1] : null;
+  const nextStart = last ? (() => { const e = calcEndMin(last); const iv = parseInt(last.interval) || 0; return e !== null ? minToStr(e + iv) : ''; })() : state.globalStart;
+  state.sessions.push(newSession(state, cfg, nextStart));
+  render(tab);
 }
 
-function onElapsedInput(id, el) {
+function onElapsedInput(tab, id, el) {
   const raw = el.value.replace(/[^\d]/g, '');
   el.value = raw;
-  const idx = sessions.findIndex(s => s.id === id);
+  const state = STATE[tab];
+  const idx = state.sessions.findIndex(s => s.id === id);
   if (idx < 0) return;
-  sessions[idx].elapsed = raw;
-  propagateFrom(idx);
+  state.sessions[idx].elapsed = raw;
+  propagateFrom(tab, idx);
 }
 
-function onIntervalInput(id, el) {
+function onIntervalInput(tab, id, el) {
   const raw = el.value.replace(/[^\d]/g, '');
   el.value = raw;
-  const idx = sessions.findIndex(s => s.id === id);
+  const state = STATE[tab];
+  const idx = state.sessions.findIndex(s => s.id === id);
   if (idx < 0) return;
-  sessions[idx].interval = raw;
-  propagateFrom(idx);
+  state.sessions[idx].interval = raw;
+  propagateFrom(tab, idx);
 }
 
-function onNameInput(id, el) {
-  const idx = sessions.findIndex(s => s.id === id);
+function onNameInput(tab, id, el) {
+  const state = STATE[tab];
+  const idx = state.sessions.findIndex(s => s.id === id);
   if (idx < 0) return;
-  sessions[idx].name = el.value;
+  state.sessions[idx].name = el.value;
 }
 
-function onStartEdit(id, el) {
+function onStartEdit(tab, id, el) {
   let raw = el.value.replace(/[^\d]/g, '');
   if (raw.length >= 3) raw = raw.slice(0, 2) + ':' + raw.slice(2, 4);
   el.value = raw;
-  const idx = sessions.findIndex(s => s.id === id);
+  const state = STATE[tab];
+  const idx = state.sessions.findIndex(s => s.id === id);
   if (idx < 0) return;
-  sessions[idx].start = raw;
-  propagateFrom(idx);
+  state.sessions[idx].start = raw;
+  propagateFrom(tab, idx);
 }
 
-function render() {
-  const container = document.getElementById('sessions');
+function render(tab) {
+  const state = STATE[tab];
+  const cfg = CONFIG[tab];
+  const container = document.getElementById(tab + '-sessions');
   container.innerHTML = '';
-  sessions.forEach((s, i) => {
+  state.sessions.forEach((s, i) => {
     const endMin = calcEndMin(s);
     const isAuto = i > 0;
     const div = document.createElement('div');
     div.className = 'session' + (s.done ? ' done' : '');
-    div.id = 'card-' + s.id;
+    div.id = tab + '-card-' + s.id;
     div.innerHTML = `
-      <div class="session-header" onclick="toggleDone(${s.id})">
+      <div class="session-header" onclick="toggleDone('${tab}',${s.id})">
         <span class="session-title">セッション ${s.id}</span>
-        <span class="session-badge ${s.done ? 'done' : ''}" id="badge-${s.id}">${s.done ? '転記済み' : 'タップで転記済み'}</span>
+        <span class="session-badge ${s.done ? 'done' : ''}" id="${tab}-badge-${s.id}">${s.done ? '転記済み' : 'タップで転記済み'}</span>
       </div>
+      ${cfg.hasName ? `
       <div class="field">
         <div class="field-label-row"><span>氏名</span></div>
         <div class="cell">
-          <input id="name-${s.id}" type="text" value="${escapeHtml(s.name || '')}" placeholder="氏名" oninput="onNameInput(${s.id},this)">
+          <input id="${tab}-name-${s.id}" type="text" value="${escapeHtml(s.name || '')}" placeholder="氏名" oninput="onNameInput('${tab}',${s.id},this)">
         </div>
-      </div>
+      </div>` : ''}
       <div class="row2">
         <div class="field">
           <div class="field-label-row">
             <span>開始時刻${isAuto ? '（自動）' : ''}</span>
-            ${isAuto ? `<button id="editbtn-${s.id}" class="edit-link ${s.manualStart ? 'active' : ''}" onclick="event.stopPropagation();toggleManualStart(${s.id})">${s.manualStart ? '自動に戻す' : '編集'}</button>` : ''}
+            ${isAuto ? `<button id="${tab}-editbtn-${s.id}" class="edit-link ${s.manualStart ? 'active' : ''}" onclick="event.stopPropagation();toggleManualStart('${tab}',${s.id})">${s.manualStart ? '自動に戻す' : '編集'}</button>` : ''}
           </div>
-          <div class="cell ${s.manualStart ? 'manual' : ''}" id="startcell-${s.id}">
-            <input id="s-${s.id}" type="text" inputmode="numeric" placeholder="0855"
+          <div class="cell ${s.manualStart ? 'manual' : ''}" id="${tab}-startcell-${s.id}">
+            <input id="${tab}-s-${s.id}" type="text" inputmode="numeric" placeholder="0855"
               value="${s.start}" ${isAuto && !s.manualStart ? 'readonly' : ''}
-              oninput="onStartEdit(${s.id},this)">
+              oninput="onStartEdit('${tab}',${s.id},this)">
           </div>
         </div>
         <div class="field">
           <div class="field-label-row"><span>終了時刻</span></div>
-          <div class="cell end-cell" id="end-${s.id}">${endMin !== null ? minToStr(endMin) : '—'}</div>
+          <div class="cell end-cell" id="${tab}-end-${s.id}">${endMin !== null ? minToStr(endMin) : '—'}</div>
         </div>
       </div>
       <div class="row2">
         <div class="field">
-          <div class="field-label-row"><span>ケア時間（分）</span></div>
+          <div class="field-label-row"><span>${cfg.elapsedLabel}</span></div>
           <div class="cell">
-            <input type="text" inputmode="numeric" value="${s.elapsed}" oninput="onElapsedInput(${s.id},this)">
+            <input type="text" inputmode="numeric" value="${s.elapsed}" oninput="onElapsedInput('${tab}',${s.id},this)">
           </div>
         </div>
         <div class="field">
           <div class="field-label-row"><span>インターバル(分)</span></div>
           <div class="cell">
-            <input id="ival-${s.id}" type="text" inputmode="numeric" placeholder="5" value="${s.interval}" oninput="onIntervalInput(${s.id},this)">
+            <input id="${tab}-ival-${s.id}" type="text" inputmode="numeric" placeholder="5" value="${s.interval}" oninput="onIntervalInput('${tab}',${s.id},this)">
           </div>
         </div>
       </div>
@@ -303,33 +409,37 @@ function render() {
   });
 }
 
-function showCopyToast(msg) {
-  const toast = document.getElementById('copyToast');
+function showCopyToast(tab, msg) {
+  const toast = document.getElementById(tab + '-copyToast');
   toast.textContent = msg;
   setTimeout(() => { if (toast.textContent === msg) toast.textContent = ''; }, 2000);
 }
 
-function doCopy() {
-  if (sessions.length === 0) {
-    showCopyToast('セッションがありません');
+function doCopy(tab) {
+  const state = STATE[tab];
+  const cfg = CONFIG[tab];
+  if (state.sessions.length === 0) {
+    showCopyToast(tab, 'セッションがありません');
     return;
   }
-  const text = sessions.map(s => {
+  const text = state.sessions.map(s => {
     const endMin = calcEndMin(s);
-    return [s.name || '', s.start || '', endMin !== null ? minToStr(endMin) : '', s.elapsed || ''].join('\t');
+    const cols = cfg.hasName ? [s.name || ''] : [];
+    cols.push(s.start || '', endMin !== null ? minToStr(endMin) : '', s.elapsed || '');
+    return cols.join('\t');
   }).join('\n');
   navigator.clipboard.writeText(text).then(() => {
-    showCopyToast('コピーしました');
+    showCopyToast(tab, 'コピーしました');
   }).catch(() => {
-    showCopyToast('コピーに失敗しました');
+    showCopyToast(tab, 'コピーに失敗しました');
   });
 }
 
-function clearAll() {
-  elapsedHistory = []; intervalHistory = []; sessions = []; numPeople = 0; globalStart = ''; nextId = 1;
-  document.getElementById('numPeople').value = '';
-  document.getElementById('startTime').value = '';
-  render();
+function clearAll(tab) {
+  STATE[tab] = createState();
+  document.getElementById(tab + '-numPeople').value = '';
+  document.getElementById(tab + '-startTime').value = '';
+  render(tab);
 }
 </script>
 </body>
